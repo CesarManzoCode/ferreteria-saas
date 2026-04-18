@@ -1,20 +1,22 @@
 # ============================================================
-# Makefile — Ferretería SaaS
+# Makefile — Comandos del proyecto
 # ============================================================
+#
+# Uso: make <comando>
+# Ejemplo: make dev, make logs, make migrate
+#
+# .PHONY declara targets que no son archivos reales.
+# Sin esto, si existe un archivo llamado "dev", make se confunde.
+#
+.PHONY: help dev down logs shell-backend shell-db migrate \
+        migration build prod deploy backup
 
-.PHONY: help \
-        up up-d down restart \
-        build build-backend build-frontend rebuild \
-        logs logs-backend logs-frontend logs-db \
-        ps shell-backend shell-db \
-        migrate migration migrate-down migrate-history \
-        deploy backup \
-        create-admin create-user activate-org list-orgs
-
+# ── Colores para output legible ───────────────────────────
 CYAN  := \033[0;36m
 GREEN := \033[0;32m
 RESET := \033[0m
 
+# ── Comando por default al escribir solo 'make' ───────────
 .DEFAULT_GOAL := help
 
 help: ## Muestra esta ayuda
@@ -22,117 +24,79 @@ help: ## Muestra esta ayuda
 	@echo "  Ferretería SaaS — Comandos disponibles"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-22s$(RESET) %s\n", $$1, $$2}'
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "  $(CYAN)%-20s$(RESET) %s\n", $$1, $$2}'
 	@echo ""
 
-# ── Servicios ─────────────────────────────────────────────
+# ── Desarrollo ────────────────────────────────────────────
 
-up: ## Levanta todos los servicios con hot reload
-	docker compose up
+dev: ## Levanta todo el entorno de desarrollo (con hot reload)
+	@echo "$(GREEN)Levantando entorno de desarrollo...$(RESET)"
+	docker compose up --build
 
-up-d: ## Levanta todos los servicios en background
-	docker compose up -d
+dev-d: ## Levanta en background (detached)
+	docker compose up --build -d
 
-down: ## Detiene y elimina los contenedores
+down: ## Detiene y elimina los contenedores (datos persisten en volúmenes)
 	docker compose down
 
-down-v: ## Detiene contenedores y BORRA los datos (cuidado)
-	@read -p "¿Borrar todos los datos? (y/N): " c && [ "$$c" = "y" ]
+down-v: ## Detiene y elimina contenedores Y volúmenes (BORRA LOS DATOS)
+	@echo "⚠️  Esto borrará todos los datos de la base de datos"
+	@read -p "¿Estás seguro? (y/N): " confirm && [ "$$confirm" = "y" ]
 	docker compose down -v
 
-restart: ## Reinicia todos los servicios
-	docker compose restart
-
-restart-backend: ## Reinicia solo el backend
-	docker compose restart backend
-
-restart-frontend: ## Reinicia solo el frontend
-	docker compose restart frontend
-
-ps: ## Ver estado de los contenedores
-	docker compose ps
-
-# ── Build ─────────────────────────────────────────────────
-
-build: ## Construye todas las imágenes
-	docker compose build
-
-build-backend: ## Construye solo la imagen del backend
-	docker compose build backend
-
-build-frontend: ## Construye solo la imagen del frontend
-	docker compose build frontend
-
-rebuild: ## Reconstruye todo desde cero sin cache
-	docker compose build --no-cache
-
-rebuild-backend: ## Reconstruye solo el backend sin cache
-	docker compose build --no-cache backend
-
-rebuild-frontend: ## Reconstruye solo el frontend sin cache
-	docker compose build --no-cache frontend
-
-# ── Logs ──────────────────────────────────────────────────
-
-logs: ## Logs de todos los servicios
+logs: ## Muestra logs de todos los servicios
 	docker compose logs -f
 
-logs-backend: ## Logs del backend
+logs-backend: ## Muestra solo logs del backend
 	docker compose logs -f backend
 
-logs-frontend: ## Logs del frontend
-	docker compose logs -f frontend
-
-logs-db: ## Logs de la base de datos
+logs-db: ## Muestra solo logs de la base de datos
 	docker compose logs -f db
 
-# ── Consolas ──────────────────────────────────────────────
+# ── Shells interactivos ───────────────────────────────────
 
-shell-backend: ## Terminal dentro del contenedor backend
+shell-backend: ## Abre bash dentro del contenedor del backend
 	docker compose exec backend bash
 
-shell-db: ## Consola de PostgreSQL
+shell-db: ## Abre psql dentro del contenedor de postgres
 	docker compose exec db psql -U $${POSTGRES_USER} -d $${POSTGRES_DB}
 
-# ── Migraciones ───────────────────────────────────────────
+# ── Base de datos y migraciones ───────────────────────────
 
-migrate: ## Aplica migraciones pendientes
+migrate: ## Aplica todas las migraciones pendientes
 	docker compose exec backend alembic upgrade head
 
-migration: ## Genera migración (uso: make migration MSG="descripcion")
-	@[ -n "$(MSG)" ] || (echo "❌ Uso: make migration MSG='descripcion'"; exit 1)
+migration: ## Genera una nueva migración (uso: make migration MSG="descripcion")
+	@[ -n "$(MSG)" ] || (echo "❌ Falta MSG. Uso: make migration MSG='descripcion'"; exit 1)
 	docker compose exec backend alembic revision --autogenerate -m "$(MSG)"
 
 migrate-down: ## Revierte la última migración
 	docker compose exec backend alembic downgrade -1
 
-migrate-history: ## Historial de migraciones
+migrate-history: ## Muestra el historial de migraciones
 	docker compose exec backend alembic history --verbose
 
-# ── Deploy y backup ───────────────────────────────────────
+# ── Build y producción ────────────────────────────────────
 
-deploy: ## Deploy al VPS
+build: ## Construye las imágenes de producción
+	docker compose -f docker-compose.prod.yml build
+
+prod: ## Levanta el entorno de producción
+	docker compose -f docker-compose.prod.yml up -d
+
+prod-down: ## Detiene producción
+	docker compose -f docker-compose.prod.yml down
+
+prod-logs: ## Logs de producción
+	docker compose -f docker-compose.prod.yml logs -f
+
+# ── Deploy al VPS ─────────────────────────────────────────
+
+deploy: ## Deploy completo al VPS (requiere SSH configurado)
+	@echo "$(GREEN)Iniciando deploy...$(RESET)"
 	bash scripts/deploy.sh
 
-backup: ## Backup de la base de datos
+# ── Backup ───────────────────────────────────────────────
+
+backup: ## Crea un backup de la base de datos
 	bash scripts/backup.sh
-
-# ── Usuarios y organizaciones ─────────────────────────────
-
-create-admin: ## Hacer admin a usuario (uso: make create-admin EMAIL=x)
-	@[ -n "$(EMAIL)" ] || (echo "❌ Uso: make create-admin EMAIL=tu@correo.com"; exit 1)
-	docker compose exec backend python /app/scripts/make_admin.py "$(EMAIL)"
-
-create-user: ## Crear usuario (uso: make create-user EMAIL=x NAME='x' ORG='x' PASS=x)
-	@[ -n "$(EMAIL)" ] || (echo "❌ Falta EMAIL"; exit 1)
-	@[ -n "$(NAME)"  ] || (echo "❌ Falta NAME";  exit 1)
-	@[ -n "$(ORG)"   ] || (echo "❌ Falta ORG";   exit 1)
-	@[ -n "$(PASS)"  ] || (echo "❌ Falta PASS";  exit 1)
-	docker compose exec backend python /app/scripts/create_user.py "$(EMAIL)" "$(NAME)" "$(ORG)" "$(PASS)"
-
-activate-org: ## Activar suscripción (uso: make activate-org EMAIL=x)
-	@[ -n "$(EMAIL)" ] || (echo "❌ Uso: make activate-org EMAIL=correo@cliente.com"; exit 1)
-	docker compose exec backend python /app/scripts/activate_org.py "$(EMAIL)"
-
-list-orgs: ## Listar organizaciones y su estado
-	docker compose exec backend python /app/scripts/list_orgs.py
