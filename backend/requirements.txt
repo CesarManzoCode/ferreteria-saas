@@ -9,6 +9,7 @@ psycopg2-binary==2.9.9
 
 # Configuración
 pydantic-settings==2.5.2
+pydantic[email]==2.9.2
 python-dotenv==1.0.1
 
 # Autenticación
