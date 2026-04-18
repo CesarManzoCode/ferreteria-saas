@@ -18,7 +18,7 @@ Nada más. Docker instala todo lo demás adentro.
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/ferreteria-saas.git
+git clone https://github.com/CesarManzoCode/ferreteria-saas.git
 cd ferreteria-saas
 ```
 
