@@ -100,3 +100,81 @@ deploy: ## Deploy completo al VPS (requiere SSH configurado)
 
 backup: ## Crea un backup de la base de datos
 	bash scripts/backup.sh
+
+# ── Gestión de usuarios ───────────────────────────────────
+
+create-admin: ## Hacer admin a un usuario existente (uso: make create-admin EMAIL=tu@email.com)
+	@[ -n "$(EMAIL)" ] || (echo "❌ Falta EMAIL. Uso: make create-admin EMAIL=tu@correo.com"; exit 1)
+	docker compose exec backend python -c "
+import sys; sys.path.insert(0, '.')
+from app.core.database import SessionLocal
+from app.models.user import User
+db = SessionLocal()
+user = db.query(User).filter(User.email == '$(EMAIL)').first()
+if not user:
+    print('❌ Usuario no encontrado: $(EMAIL)')
+    sys.exit(1)
+user.role = 'admin'
+db.commit()
+print(f'✅ {user.full_name} ({user.email}) ahora es admin')
+"
+
+create-user: ## Crear usuario desde consola (uso: make create-user EMAIL=x NAME=x ORG=x PASS=x)
+	@[ -n "$(EMAIL)" ] || (echo "❌ Falta EMAIL"; exit 1)
+	@[ -n "$(NAME)"  ] || (echo "❌ Falta NAME";  exit 1)
+	@[ -n "$(ORG)"   ] || (echo "❌ Falta ORG";   exit 1)
+	@[ -n "$(PASS)"  ] || (echo "❌ Falta PASS";  exit 1)
+	docker compose exec backend python -c "
+import sys, uuid; sys.path.insert(0, '.')
+from slugify import slugify
+from app.core.database import SessionLocal
+from app.core.security import hash_password
+from app.models.organization import Organization
+from app.models.user import User
+db = SessionLocal()
+if db.query(User).filter(User.email == '$(EMAIL)').first():
+    print('❌ Email ya registrado')
+    sys.exit(1)
+slug = slugify('$(ORG)')
+org = Organization(name='$(ORG)', slug=slug)
+org.set_trial()
+db.add(org); db.flush()
+user = User(organization_id=org.id, email='$(EMAIL)', hashed_password=hash_password('$(PASS)'), full_name='$(NAME)')
+db.add(user); db.commit()
+print(f'✅ Usuario creado: $(EMAIL) en org "$(ORG)"')
+"
+
+activate-org: ## Activar suscripción de una org (uso: make activate-org EMAIL=admin@org.com)
+	@[ -n "$(EMAIL)" ] || (echo "❌ Falta EMAIL del usuario de esa org"; exit 1)
+	docker compose exec backend python -c "
+import sys; sys.path.insert(0, '.')
+from datetime import datetime, timezone
+from app.core.database import SessionLocal
+from app.models.user import User
+from sqlalchemy.orm import joinedload
+db = SessionLocal()
+user = db.query(User).options(joinedload(User.organization)).filter(User.email == '$(EMAIL)').first()
+if not user:
+    print('❌ Usuario no encontrado')
+    sys.exit(1)
+org = user.organization
+org.subscription_status = 'active'
+org.subscribed_at = datetime.now(timezone.utc)
+db.commit()
+print(f'✅ Org "{org.name}" activada')
+"
+
+list-orgs: ## Listar todas las organizaciones y su estado
+	docker compose exec backend python -c "
+import sys; sys.path.insert(0, '.')
+from app.core.database import SessionLocal
+from app.models.organization import Organization
+db = SessionLocal()
+orgs = db.query(Organization).order_by(Organization.created_at.desc()).all()
+print(f'\n  {"Nombre":<30} {"Status":<12} {"Trial vence":<22} {"Activa"}')
+print('  ' + '-'*75)
+for o in orgs:
+    trial = o.trial_ends_at.strftime("%d %b %Y %H:%M") if o.trial_ends_at else '-'
+    print(f'  {o.name:<30} {o.subscription_status:<12} {trial:<22} {o.is_active}')
+print()
+"

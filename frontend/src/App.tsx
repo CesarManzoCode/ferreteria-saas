@@ -9,6 +9,8 @@ import QuotesPage from './pages/Quotes'
 import QuoteDetailPage from './pages/QuoteDetail'
 import NewQuotePage from './pages/NewQuote'
 import CatalogsPage from './pages/Catalogs'
+import AdminPage from './pages/Admin'
+import SubscriptionExpiredPage from './pages/SubscriptionExpired'
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
               <Route path="/quotes/new"   element={<NewQuotePage />} />
               <Route path="/quotes/:id"   element={<QuoteDetailPage />} />
               <Route path="/catalogs"     element={<CatalogsPage />} />
+              <Route path="/admin"         element={<AdminPage />} />
+              <Route path="/expired"       element={<SubscriptionExpiredPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -19,7 +19,7 @@
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, BookOpen, LogOut, Wrench,
+  LayoutDashboard, FileText, BookOpen, LogOut, Wrench, ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -27,12 +27,14 @@ interface NavItem {
   icon: typeof LayoutDashboard
   label: string
   path: string
+  adminOnly?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
   { icon: LayoutDashboard, label: 'Dashboard',    path: '/dashboard' },
   { icon: FileText,        label: 'Cotizaciones', path: '/quotes'    },
   { icon: BookOpen,        label: 'Catálogos',    path: '/catalogs'  },
+  { icon: ShieldCheck,     label: 'Admin',        path: '/admin', adminOnly: true },
 ]
 
 export default function AppLayout() {
@@ -59,7 +61,7 @@ export default function AppLayout() {
         {/* ── Sidebar ───────────────────────────────────── */}
         <aside className="w-52 bg-surface border-r border-border flex flex-col flex-shrink-0">
           <nav className="flex-1 p-3 flex flex-col gap-1 pt-4">
-            {NAV_ITEMS.map(({ icon: Icon, label, path }) => {
+            {NAV_ITEMS.filter(item => !item.adminOnly || user?.role === 'admin').map(({ icon: Icon, label, path }) => {
               const isActive = location.pathname.startsWith(path)
               return (
                 <button

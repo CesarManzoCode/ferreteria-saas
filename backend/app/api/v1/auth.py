@@ -81,6 +81,7 @@ def register(request: UserRegisterRequest, db: Session = Depends(get_db)) -> Tok
         name=request.organization_name,
         slug=slug,
     )
+    organization.set_trial()  # inicializa trial de 14 días
     db.add(organization)
     db.flush()  # flush envía el INSERT a la DB sin hacer commit
                 # necesario para obtener el organization.id antes del commit
