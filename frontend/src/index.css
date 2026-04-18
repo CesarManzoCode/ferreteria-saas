@@ -1,0 +1,110 @@
+/*
+ * Estilos globales — se importa UNA VEZ en main.tsx.
+ *
+ * @tailwind base/components/utilities son directivas que Tailwind
+ * reemplaza en build time con el CSS real. Sin ellas, las clases
+ * de Tailwind no funcionan.
+ *
+ * Aquí solo van estilos que NO se pueden expresar con clases Tailwind:
+ *   - Import de fuentes externas
+ *   - Reset/base de elementos HTML
+ *   - Scrollbar custom
+ *   - Clases de utilidad globales que se repiten mucho
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ────────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg text-primary text-base;
+    min-height: 100vh;
+  }
+
+  /* Inputs y selects — base consistente para todos */
+  input, select, textarea {
+    @apply outline-none;
+  }
+
+  /* Quitar flechas de inputs number en Chrome */
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* ── Componentes globales ─────────────────────────────────── */
+@layer components {
+  /*
+   * .card — tarjeta blanca con borde y sombra sutil.
+   * Se usa en toda la app para agrupar contenido.
+   * Es una @layer component para que pueda ser overrideada
+   * por utilidades de Tailwind cuando es necesario.
+   */
+  .card {
+    @apply bg-surface rounded-lg border border-border shadow-card;
+  }
+
+  /* Input estándar del sistema */
+  .input {
+    @apply w-full px-3 py-2 bg-surface border border-border rounded-md
+           text-base text-primary placeholder-muted
+           focus:border-primary focus:ring-1 focus:ring-primary/20
+           transition-colors duration-150;
+  }
+
+  /* Botón primario — terracota, para acciones principales */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 rounded-md text-base font-medium
+           bg-accent text-white
+           hover:bg-accent-dark active:scale-95
+           transition-all duration-150 cursor-pointer
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botón secundario — borde, para acciones secundarias */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 rounded-md text-base font-medium
+           bg-surface text-primary border border-border
+           hover:bg-bg active:scale-95
+           transition-all duration-150 cursor-pointer
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botón de peligro — para eliminar */
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2
+           px-4 py-2 rounded-md text-base font-medium
+           bg-danger-light text-danger border border-danger/20
+           hover:bg-danger hover:text-white active:scale-95
+           transition-all duration-150 cursor-pointer;
+  }
+
+  /* Badge de estado para cotizaciones */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium;
+  }
+  .badge-draft   { @apply bg-bg text-muted border border-border; }
+  .badge-sent    { @apply bg-primary/10 text-primary; }
+  .badge-accepted{ @apply bg-success-light text-success; }
+  .badge-expired { @apply bg-warning-light text-warning; }
+}
+
+/* ── Scrollbar sutil ──────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D0CEC9; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B0ADA8; }
