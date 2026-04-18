@@ -61,9 +61,17 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token')
       localStorage.removeItem('user')
-      // Redirigir a login si no estamos ya ahí
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login'
+      }
+    }
+    // Suscripción vencida — redirigir a pantalla de expiración
+    if (error.response?.status === 403) {
+      const data = error.response.data as { detail?: string }
+      if (data?.detail === 'subscription_expired') {
+        if (!window.location.pathname.includes('/expired')) {
+          window.location.href = '/expired'
+        }
       }
     }
     return Promise.reject(error)

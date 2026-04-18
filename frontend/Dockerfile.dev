@@ -1,0 +1,13 @@
+# Dockerfile.dev — Frontend en desarrollo con hot reload
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+EXPOSE 5173
+
+# --host 0.0.0.0 es obligatorio — sin esto Vite no es accesible fuera del contenedor
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

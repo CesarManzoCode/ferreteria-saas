@@ -76,8 +76,12 @@ def health_check() -> dict:
 
 
 # ── Routers ───────────────────────────────────────────────
-from app.api.v1 import auth, catalogs, quotes
+from app.api.v1 import auth, catalogs, quotes, admin
+from app.core.middleware import SubscriptionMiddleware
+
+app.add_middleware(SubscriptionMiddleware)
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["autenticación"])
 app.include_router(catalogs.router, prefix="/api/v1/catalogs", tags=["catálogos"])
 app.include_router(quotes.router, prefix="/api/v1/quotes", tags=["cotizaciones"])
+app.include_router(admin.router, prefix="/api/v1/admin", tags=["administración"])
