@@ -76,7 +76,9 @@ def health_check() -> dict:
 
 
 # ── Routers ───────────────────────────────────────────────
-# Se irán registrando aquí conforme los construyamos.
-# Ejemplo futuro:
-#   from app.api.v1 import auth, catalogs, quotes
-#   app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+from app.api.v1 import auth
+
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["autenticación"])
+# Se irán añadiendo aquí:
+# app.include_router(catalogs.router, prefix="/api/v1/catalogs", tags=["catálogos"])
+# app.include_router(quotes.router, prefix="/api/v1/quotes", tags=["cotizaciones"])
