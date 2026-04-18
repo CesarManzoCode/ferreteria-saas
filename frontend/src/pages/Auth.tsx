@@ -11,7 +11,7 @@
  *   4. Si error → muestra mensaje con react-hot-toast
  */
 
-import { useState, FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Wrench } from 'lucide-react'
 import toast from 'react-hot-toast'

@@ -19,7 +19,7 @@
  * useAuth() es el hook que usan los componentes para acceder al contexto.
  */
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clearSession, getStoredUser, saveSession } from '../api/auth'
 import type { TokenResponse, User } from '../types'

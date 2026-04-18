@@ -4,7 +4,7 @@ import { Plus, FileText, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getQuotes, deleteQuote } from '../api'
 import { Button, Spinner, EmptyState, Badge } from '../components/ui'
-import { formatCurrency, formatDate, QUOTE_STATUS_LABELS, QUOTE_STATUS_CLASS } from '../lib/utils'
+import { formatCurrency, formatDate, QUOTE_STATUS_LABELS } from '../lib/utils'
 import { getErrorMessage } from '../api/client'
 import type { QuoteListItem } from '../types'
 

@@ -6,7 +6,6 @@
 
 import { useAuth } from '../hooks/useAuth'
 import { Wrench, Mail, MessageCircle } from 'lucide-react'
-import { Button } from '../components/ui'
 
 export default function SubscriptionExpiredPage() {
   const { user, logout } = useAuth()
