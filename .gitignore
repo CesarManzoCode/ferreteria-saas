@@ -1,0 +1,41 @@
+# Variables de entorno — NUNCA commitear
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Node / Frontend
+node_modules/
+frontend/dist/
+frontend/.env
+
+# Docker
+.docker/
+
+# Backups locales
+backups/
+
+# Uploads locales (en producción van en volumen Docker)
+backend/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

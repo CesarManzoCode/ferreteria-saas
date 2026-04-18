@@ -1,0 +1,68 @@
+# ============================================================
+# docker-compose.yml — Entorno de desarrollo
+# ============================================================
+#
+# Este archivo describe los servicios que componen la aplicación.
+# En desarrollo usamos --reload en uvicorn: cada cambio de código
+# reinicia el servidor automáticamente sin rebuild de imagen.
+#
+# Volúmenes en desarrollo:
+#   ./backend:/app → el código local se monta dentro del contenedor.
+#   Eso significa que editas en tu máquina y los cambios se reflejan
+#   instantáneamente sin tener que reconstruir la imagen Docker.
+
+services:
+  # ── Base de datos PostgreSQL ──────────────────────────────
+  db:
+    image: postgres:16-alpine
+    # alpine = imagen mínima de postgres, suficiente para desarrollo
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      # Volumen nombrado: los datos persisten aunque el contenedor se borre
+      # Sin esto, cada `docker compose down` borraría toda la base de datos
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Expone el puerto de postgres al host solo en desarrollo
+      # Permite conectarte con un cliente como DBeaver o TablePlus
+      # En producción este puerto NO se expone al exterior
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend FastAPI ───────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: "true"
+      ALLOWED_ORIGINS: '["http://localhost:5173"]'
+    volumes:
+      # Código fuente montado — hot reload sin rebuild
+      - ./backend:/app
+      # Volumen separado para uploads — no se sobreescribe con el mount anterior
+      - uploads_data:/app/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+        # 'service_healthy' → espera a que el healthcheck de db pase
+        # sin esto el backend puede intentar conectarse antes de que postgres arranque
+
+# ── Volúmenes nombrados ───────────────────────────────────
+# Docker gestiona dónde guardan estos datos en el sistema de archivos del host
+# Se listan aquí para que docker-compose sepa que son intencionales
+volumes:
+  postgres_data:
+  uploads_data:
