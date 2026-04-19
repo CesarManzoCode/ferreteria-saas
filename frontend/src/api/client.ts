@@ -23,7 +23,7 @@ import axios, { AxiosError } from 'axios'
 
 // URL base del backend — en desarrollo apunta a localhost
 // En producción, Vite reemplaza esta variable con el valor del .env
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE_URL = ''
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
